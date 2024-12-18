@@ -1,99 +1,54 @@
-// Agora.io Configurations
-const APP_ID = "701280bcf0b4492ea5a2f3876ed83642"; // Substitua pelo seu App ID do Agora.io
+const APP_ID = 'YOUR_APP_ID'; // Substitua pelo App ID do Agora.io
 let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
 let localTracks = [];
 let remoteUsers = {};
 
-let roomName = '';
-let token = "007eJxTYHivIMAf96GfxWkua+YDlulz1YVbZrC8vGXxgnPvZM8c8RAFBnMDQyMLg6TkNIMkExNLo9RE00SjNGMLc7PUFAtjMxOj8/zJ6Q2BjAy+aV+YGRkgEMRnYchNzMxjYAAAZXUcbA=="; // Token gerado para o canal
+const socket = io('https://realtime-ydgg.onrender.com'); // Backend hospedado no Render
 
-// Socket.IO Configurations
-const socket = io('https://seu-backend.onrender.com'); // Atualize com a URL do backend hospedado
+const joinRoomButton = document.getElementById('join-room');
+const roomInput = document.getElementById('room');
+const messageForm = document.getElementById('message-form');
+const usernameInput = document.getElementById('username');
+const messageInput = document.getElementById('message');
+const messagesDiv = document.getElementById('messages');
 
-// Join a Room with Agora.io
 async function joinRoom() {
-    roomName = document.getElementById('room').value;
-    const username = document.getElementById('username').value;
+    const roomName = roomInput.value;
+    const username = usernameInput.value;
 
-    if (!roomName || !username) {
-        alert('Please enter a room name and username');
-        return;
-    }
+    if (!roomName || !username) return alert('Please enter room name and username');
 
-    // Fetch Agora Token from your backend
-    try {
-        const response = await fetch(`https://seu-backend.onrender.com/agora-token?channel=${roomName}`);
-        const data = await response.json();
-        token = data.token; // Token enviado pelo backend
-    } catch (error) {
-        console.error('Error fetching Agora token:', error);
-        alert('Failed to fetch Agora token. Please try again.');
-        return;
-    }
-
-    // Agora Join
-    client.on('user-published', handleUserPublished);
-    client.on('user-unpublished', handleUserUnpublished);
+    const response = await fetch(`https://seu-backend.onrender.com/agora-token?channel=${roomName}`);
+    const { token } = await response.json();
 
     const uid = await client.join(APP_ID, roomName, token);
-
     localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
-    const [audioTrack, videoTrack] = localTracks;
 
-    let player = `<div id="user-container-${uid}">
-                    <div id="user-${uid}"></div>
-                  </div>`;
-    document.getElementById('video-container').insertAdjacentHTML('beforeend', player);
+    const videoContainer = document.getElementById('video-container');
+    localTracks[1].play(videoContainer);
 
-    videoTrack.play(`user-${uid}`);
-    await client.publish([audioTrack, videoTrack]);
+    await client.publish(localTracks);
 
-    // Socket.IO Join
     socket.emit('join_room', roomName);
-
-    // Display Chat Messages
-    socket.on('receive_message', ({ message, username }) => {
-        const messageElement = document.createElement('p');
-        messageElement.textContent = `${username}: ${message}`;
-        document.getElementById('messages').appendChild(messageElement);
-    });
 }
 
-// Handle Agora User Events
-function handleUserPublished(user, mediaType) {
-    const id = user.uid;
-    client.subscribe(user, mediaType).then(() => {
-        if (mediaType === 'video') {
-            let player = `<div id="user-container-${id}">
-                            <div id="user-${id}"></div>
-                          </div>`;
-            document.getElementById('video-container').insertAdjacentHTML('beforeend', player);
-            user.videoTrack.play(`user-${id}`);
-        }
-        if (mediaType === 'audio') {
-            user.audioTrack.play();
-        }
-    });
-}
-
-function handleUserUnpublished(user) {
-    const id = user.uid;
-    document.getElementById(`user-container-${id}`).remove();
-}
-
-// Send a Chat Message
-document.getElementById('message-form').addEventListener('submit', (e) => {
+messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
+    const room = roomInput.value;
+    const message = messageInput.value;
+    const username = usernameInput.value;
 
-    const message = document.getElementById('message').value;
-    const username = document.getElementById('username').value;
-
-    if (message && username && roomName) {
-        socket.emit('send_message', { room: roomName, message, username });
-        document.getElementById('message').value = '';
+    if (room && message) {
+        socket.emit('send_message', { room, message, username });
+        messageInput.value = '';
     }
 });
 
-// Attach Join Room Button
-document.getElementById('join-room').addEventListener('click', joinRoom);
+socket.on('receive_message', ({ message, username }) => {
+    const messageElement = document.createElement('p');
+    messageElement.textContent = `${username}: ${message}`;
+    messagesDiv.appendChild(messageElement);
+});
+
+joinRoomButton.addEventListener('click', joinRoom);

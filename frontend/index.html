@@ -4,19 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Group Video Chat</title>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <link rel="stylesheet" href="styles.css">
+    <!-- Agora SDK -->
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.19.3.js"></script>
     <script defer src="scripts.js"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="chat-container">
         <h1>Group Video Chat</h1>
         <input id="room" type="text" placeholder="Enter Room Name" />
         <button id="join-room">Join Room</button>
+        <div id="video-container"></div>
         <div id="messages"></div>
         <form id="message-form">
             <input id="username" type="text" placeholder="Your Name" required />
-            <input id="message" type="text" placeholder="Type a Message" required />
+            <input id="message" type="text" placeholder="Type your message" required />
             <button type="submit">Send</button>
         </form>
     </div>
