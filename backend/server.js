@@ -19,8 +19,8 @@ app.get('/', (req, res) => {
 
 // Rota para gerar tokens do Agora.io
 app.get('/agora-token', (req, res) => {
-    const APP_ID = '701280bcf0b4492ea5a2f3876ed83642';
-    const APP_CERTIFICATE = 'Yeb02c6fca8194518b9229d990d306477';
+    const APP_ID = process.env.APP_ID;
+    const APP_CERTIFICATE = process.env.APP_CERTIFICATE;
     const channelName = req.query.channel;
 
     if (!channelName) return res.status(400).json({ error: 'Channel name is required' });
