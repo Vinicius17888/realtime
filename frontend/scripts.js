@@ -1,54 +1,43 @@
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo App ID do Agora.io
-let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-
-let localTracks = [];
-let remoteUsers = {};
-
-const socket = io('https://realtime-ydgg.onrender.com'); // Backend hospedado no Render
-
-const joinRoomButton = document.getElementById('join-room');
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo seu App ID do Agora.io
 const roomInput = document.getElementById('room');
-const messageForm = document.getElementById('message-form');
-const usernameInput = document.getElementById('username');
-const messageInput = document.getElementById('message');
-const messagesDiv = document.getElementById('messages');
+const joinRoomButton = document.getElementById('join-room');
+const videoContainer = document.getElementById('video-container');
+
+let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+let localTracks = [];
 
 async function joinRoom() {
     const roomName = roomInput.value;
-    const username = usernameInput.value;
 
-    if (!roomName || !username) return alert('Please enter room name and username');
-
-    const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomName}`);
-    const { token } = await response.json();
-
-    const uid = await client.join(APP_ID, roomName, token);
-    localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
-
-    const videoContainer = document.getElementById('video-container');
-    localTracks[1].play(videoContainer);
-
-    await client.publish(localTracks);
-
-    socket.emit('join_room', roomName);
-}
-
-messageForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const room = roomInput.value;
-    const message = messageInput.value;
-    const username = usernameInput.value;
-
-    if (room && message) {
-        socket.emit('send_message', { room, message, username });
-        messageInput.value = '';
+    if (!roomName) {
+        alert('Please enter a room name');
+        return;
     }
-});
 
-socket.on('receive_message', ({ message, username }) => {
-    const messageElement = document.createElement('p');
-    messageElement.textContent = `${username}: ${message}`;
-    messagesDiv.appendChild(messageElement);
-});
+    try {
+        // Buscar o token do backend
+        const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomName}`);
+        const { token } = await response.json();
+
+        // Entrar no canal do Agora.io
+        const uid = await client.join(APP_ID, roomName, token);
+        console.log(`Joined channel: ${roomName}, UID: ${uid}`);
+
+        // Capturar vídeo e áudio
+        localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+
+        // Mostrar o vídeo local
+        const player = `<div id="user-${uid}"></div>`;
+        videoContainer.insertAdjacentHTML('beforeend', player);
+        localTracks[1].play(`user-${uid}`);
+
+        // Publicar as tracks locais
+        await client.publish(localTracks);
+        console.log("Local tracks published");
+    } catch (error) {
+        console.error("Error joining room:", error);
+        alert("Failed to join room. Check the console for details.");
+    }
+}
 
 joinRoomButton.addEventListener('click', joinRoom);
