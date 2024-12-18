@@ -12,6 +12,11 @@ const io = new Server(server, {
 
 app.use(cors());
 
+// Adiciona uma rota para a raiz "/"
+app.get('/', (req, res) => {
+    res.send('Backend is running. Use /agora-token for Agora tokens.');
+});
+
 // Rota para gerar tokens do Agora.io
 app.get('/agora-token', (req, res) => {
     const APP_ID = '701280bcf0b4492ea5a2f3876ed83642';
