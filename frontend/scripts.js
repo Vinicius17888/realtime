@@ -19,7 +19,7 @@ async function joinRoom() {
 
     if (!roomName || !username) return alert('Please enter room name and username');
 
-    const response = await fetch(`https://seu-backend.onrender.com/agora-token?channel=${roomName}`);
+    const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomName}`);
     const { token } = await response.json();
 
     const uid = await client.join(APP_ID, roomName, token);
