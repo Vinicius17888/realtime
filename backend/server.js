@@ -17,8 +17,8 @@ app.use(cors());
 
 // Rota para gerar token do Agora.io
 app.get('/agora-token', (req, res) => {
-    const APP_ID = 'YOUR_AGORA_APP_ID';
-    const APP_CERTIFICATE = 'YOUR_AGORA_APP_CERTIFICATE'; // Substitua pelo certificado do Agora.io
+    const APP_ID = '701280bcf0b4492ea5a2f3876ed83642';
+    const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477'; // Substitua pelo certificado do Agora.io
     const channelName = req.query.channel;
 
     if (!channelName) {

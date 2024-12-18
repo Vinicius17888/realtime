@@ -1,0 +1,25 @@
+{
+    "name": "group-video-chat-backend",
+    "version": "1.0.0",
+    "description": "Backend for group video chat with Agora.io and Socket.IO",
+    "main": "backend/server.js",
+    "scripts": {
+      "start": "node backend/server.js",
+      "dev": "nodemon backend/server.js"
+    },
+    "dependencies": {
+      "cors": "^2.8.5",
+      "express": "^4.18.2",
+      "socket.io": "^4.5.4",
+      "agora-access-token": "^3.0.1"
+    },
+    "devDependencies": {
+      "nodemon": "^2.0.20"
+    },
+    "engines": {
+      "node": ">=14.0.0"
+    },
+    "author": "Vinicin",
+    "license": "MIT"
+  }
+  
