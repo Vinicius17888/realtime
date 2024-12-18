@@ -1,4 +1,4 @@
-const APP_ID = 'YOUR_APP_ID'; // Substitua pelo App ID do Agora.io
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo App ID do Agora.io
 let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
 let localTracks = [];
