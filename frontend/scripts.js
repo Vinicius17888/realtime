@@ -1,4 +1,4 @@
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642';
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo seu APP_ID do Agora.io
 const socket = io('https://realtime-ydgg.onrender.com');
 
 let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
@@ -14,8 +14,19 @@ const messageForm = document.getElementById('message-form');
 const messagesDiv = document.getElementById('messages');
 const usernameInput = document.getElementById('username');
 const messageInput = document.getElementById('message');
+const leaveRoomButton = document.getElementById('leave-room');
+const muteMicButton = document.getElementById('mute-mic');
+const toggleCameraButton = document.getElementById('toggle-camera');
+
+let isMicMuted = false;
+let isCameraOn = true;
 
 async function joinRoom() {
+    // Trocar de sala sem recarregar
+    if (roomName) {
+        await leaveRoom();
+    }
+
     roomName = roomInput.value;
     const username = usernameInput.value;
 
@@ -96,15 +107,44 @@ client.on("user-published", async (user, mediaType) => {
     remoteUsers[user.uid] = user;
 });
 
-// Handle remote user unpublishing tracks
-client.on("user-unpublished", (user) => {
-    console.log(`User unpublished: ${user.uid}`);
-    delete remoteUsers[user.uid];
-
-    const player = document.getElementById(`user-${user.uid}`);
-    if (player) {
-        player.remove();
+async function leaveRoom() {
+    for (let track of localTracks) {
+        track.stop();
+        track.close();
     }
+    localTracks = [];
+    remoteUsers = {};
+    videoContainer.innerHTML = '';
+    messagesDiv.innerHTML = '';
+
+    await client.leave();
+    console.log("Left the room");
+    roomName = null;
+}
+
+muteMicButton.addEventListener('click', () => {
+    if (!localTracks[0]) return;
+    if (isMicMuted) {
+        localTracks[0].setEnabled(true);
+        muteMicButton.textContent = "Mute Mic";
+    } else {
+        localTracks[0].setEnabled(false);
+        muteMicButton.textContent = "Unmute Mic";
+    }
+    isMicMuted = !isMicMuted;
 });
 
+toggleCameraButton.addEventListener('click', () => {
+    if (!localTracks[1]) return;
+    if (isCameraOn) {
+        localTracks[1].setEnabled(false);
+        toggleCameraButton.textContent = "Turn Camera On";
+    } else {
+        localTracks[1].setEnabled(true);
+        toggleCameraButton.textContent = "Turn Camera Off";
+    }
+    isCameraOn = !isCameraOn;
+});
+
+leaveRoomButton.addEventListener('click', leaveRoom);
 joinRoomButton.addEventListener('click', joinRoom);
