@@ -1,16 +1,5 @@
 body {
     font-family: Arial, sans-serif;
-    text-align: center;
-}
-
-#video-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 20px;
-    background-color: #eee;
-    height: 400px;
-    overflow: auto;
 }
 
 .video-player {
@@ -18,24 +7,25 @@ body {
     height: 150px;
     margin: 5px;
     background-color: black;
+    display: inline-block;
 }
 
 #chat-container {
     margin-top: 20px;
-    border: 1px solid #ccc;
-    padding: 10px;
-    height: 300px;
-    overflow-y: scroll;
-    background-color: #f9f9f9;
 }
 
 #messages {
-    height: 80%;
+    height: 300px;
     overflow-y: auto;
-    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
 }
 
 #message-form input {
-    margin: 5px;
-    padding: 5px;
+    flex-grow: 1;
+}
+
+#message-form button {
+    width: auto;
 }
