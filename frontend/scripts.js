@@ -6,15 +6,21 @@ let localTracks = [];
 let remoteUsers = {};
 let roomName;
 
+// Elementos da interface
 const joinRoomButton = document.getElementById('join-room');
 const roomInput = document.getElementById('room');
 const videoContainer = document.getElementById('video-container');
+const messageForm = document.getElementById('message-form');
+const messagesDiv = document.getElementById('messages');
+const usernameInput = document.getElementById('username');
+const messageInput = document.getElementById('message');
 
 async function joinRoom() {
     roomName = roomInput.value;
+    const username = usernameInput.value;
 
-    if (!roomName) {
-        alert("Please enter a room name");
+    if (!roomName || !username) {
+        alert("Please enter a room name and username");
         return;
     }
 
@@ -37,8 +43,35 @@ async function joinRoom() {
     await client.publish(localTracks);
     console.log("Local tracks published");
 
-    // Notify others of a new user
+    // Notify the socket server
     socket.emit('join_room', roomName);
+
+    // Enable chat functionality
+    enableChat();
+}
+
+function enableChat() {
+    messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const message = messageInput.value;
+        const username = usernameInput.value;
+
+        if (message && roomName) {
+            socket.emit('send_message', { room: roomName, message, username });
+            messageInput.value = '';
+            displayMessage(username, message); // Display local message
+        }
+    });
+
+    socket.on('receive_message', (data) => {
+        displayMessage(data.username, data.message);
+    });
+}
+
+function displayMessage(username, message) {
+    const messageElement = document.createElement('div');
+    messageElement.textContent = `${username}: ${message}`;
+    messagesDiv.appendChild(messageElement);
 }
 
 // Handle remote user publishing tracks
