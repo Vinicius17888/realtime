@@ -28,7 +28,7 @@ async function joinRoom() {
     socket.emit('join_room', roomName);
 
     // Fetch Agora token
-    const response = await fetch(`https://seu-backend.onrender.com/agora-token?channel=${roomName}`);
+    const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomName}`);
     const { token } = await response.json();
 
     const uid = await client.join(APP_ID, roomName, token);
