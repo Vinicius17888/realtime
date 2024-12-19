@@ -7,9 +7,10 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: '*' }
+    cors: { origin: '*' } // Permitir qualquer origem para Socket.IO
 });
 
+// Configurar CORS para todas as requisições HTTP
 app.use(cors());
 
 app.get('/agora-token', (req, res) => {
