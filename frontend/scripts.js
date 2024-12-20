@@ -1,4 +1,4 @@
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo seu APP_ID do Agora.io
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; 
 const socket = io('https://realtime-ydgg.onrender.com');
 
 let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
@@ -13,7 +13,7 @@ let roomId;
 
 async function createRoom() {
     const response = await fetch('https://realtime-ydgg.onrender.com/create-room', {
-        method: 'GET', // Agora usa GET para criar sala
+        method: 'GET', 
     });
 
     const { roomId } = await response.json();
@@ -30,50 +30,55 @@ async function joinRoom() {
     roomId = params.get('room');
 
     if (!roomId) {
-        console.log('Use the "Create Room" button to generate a room.');
+        console.log('Room link is missing. Use the "Create Room" button to generate a room.');
         return;
     }
-    
 
-    // Fetch Agora token
-    const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomId}`);
-    const { token } = await response.json();
+    try {
+        // Fetch Agora token
+        const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomId}`);
+        const { token } = await response.json();
 
-    // Join Agora channel
-    const uid = await client.join(APP_ID, roomId, token);
+        // Join Agora channel
+        const uid = await client.join(APP_ID, roomId, token);
 
-    // Create local tracks (camera and mic)
-    localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+        // Create local tracks (camera and mic)
+        localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
 
-    // Display local video
-    const localPlayer = `<div id="user-${uid}" class="video-player"></div>`;
-    videoContainer.insertAdjacentHTML('beforeend', localPlayer);
-    localTracks[1].play(`user-${uid}`);
+        // Display local video
+        const localPlayer = `<div id="user-${uid}" class="video-player"></div>`;
+        videoContainer.insertAdjacentHTML('beforeend', localPlayer);
+        localTracks[1].play(`user-${uid}`);
 
-    // Publish local tracks
-    await client.publish(localTracks);
+        // Publish local tracks
+        await client.publish(localTracks);
 
-    client.on("user-published", async (user, mediaType) => {
-        await client.subscribe(user, mediaType);
-        console.log("Subscribed to user", user.uid);
+        // Handle remote users
+        client.on("user-published", async (user, mediaType) => {
+            await client.subscribe(user, mediaType);
 
-        if (mediaType === "video") {
-            const remoteVideo = `<div id="user-${user.uid}" class="video-player"></div>`;
-            videoContainer.insertAdjacentHTML('beforeend', remoteVideo);
-            user.videoTrack.play(`user-${user.uid}`);
-        }
+            if (mediaType === "video") {
+                const remoteVideo = `<div id="user-${user.uid}" class="video-player"></div>`;
+                videoContainer.insertAdjacentHTML('beforeend', remoteVideo);
+                user.videoTrack.play(`user-${user.uid}`);
+            }
 
-        if (mediaType === "audio") {
-            user.audioTrack.play();
-        }
-    });
+            if (mediaType === "audio") {
+                user.audioTrack.play();
+            }
+        });
 
-    client.on("user-unpublished", (user) => {
-        document.getElementById(`user-${user.uid}`).remove();
-    });
+        client.on("user-unpublished", (user) => {
+            document.getElementById(`user-${user.uid}`).remove();
+        });
 
-    socket.emit('join_room', roomId);
+        socket.emit('join_room', roomId);
+    } catch (error) {
+        console.error('Error joining room:', error);
+        alert('Failed to join the room. Please try again.');
+    }
 }
+
 
 // Handle incoming messages
 socket.on('receive_message', (data) => {
