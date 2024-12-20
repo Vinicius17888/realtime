@@ -6,8 +6,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const APP_ID = 'YOUR_APP_ID'; // Substitua pelo seu APP_ID do Agora.io
-const APP_CERTIFICATE = 'YOUR_APP_CERTIFICATE'; // Substitua pelo APP_CERTIFICATE
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; 
+const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477'; 
 
 app.get('/agora-token', (req, res) => {
     const channelName = req.query.channel;
