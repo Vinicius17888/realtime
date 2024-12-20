@@ -30,9 +30,10 @@ async function joinRoom() {
     roomId = params.get('room');
 
     if (!roomId) {
-        alert('Invalid or missing room link.');
+        console.log('Use the "Create Room" button to generate a room.');
         return;
     }
+    
 
     // Fetch Agora token
     const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomId}`);
