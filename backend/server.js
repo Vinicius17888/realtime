@@ -6,14 +6,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; 
-const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477'; 
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642';
+const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477';
 
+// Rota raiz
+app.get('/', (req, res) => {
+    res.send('Backend is running. Use /agora-token to generate tokens.');
+});
+
+// Rota para gerar token do Agora.io
 app.get('/agora-token', (req, res) => {
     const channelName = req.query.channel;
 
     if (!channelName) {
-        return res.status(400).send('Channel name is required');
+        return res.status(400).send('Channel name is required.');
     }
 
     const uid = 0;
