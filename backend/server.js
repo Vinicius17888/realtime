@@ -28,9 +28,9 @@ app.get('/', (req, res) => {
 });
 
 // Rota para criar uma sala única
-app.get('/create-room', (req, res) => { // Agora aceita GET
-    const roomId = uuidv4(); // Gerar um UUID único para a sala
-    activeRooms[roomId] = true; // Adicionar a sala na lista de salas ativas
+app.get('/create-room', (req, res) => {
+    const roomId = uuidv4();
+    activeRooms[roomId] = true;
     res.json({ roomId });
 });
 
