@@ -17,18 +17,18 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo seu APP_ID do Agora.io
+const APP_ID = "701280bcf0b4492ea5a2f3876ed83642"; // Substitua pelo seu APP_ID do Agora.io
 const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477'; // Substitua pelo APP_CERTIFICATE do Agora.io
 
 let activeRooms = {}; // Objeto para armazenar informações de salas
 
 // Rota raiz para verificar se o backend está rodando
 app.get('/', (req, res) => {
-    res.send('Tá funcionandooo. Use /create-room to create unique rooms.');
+    res.send('Backend is running. Use /create-room to create unique rooms.');
 });
 
 // Rota para criar uma sala única
-app.post('/create-room', (req, res) => {
+app.get('/create-room', (req, res) => { // Agora aceita GET
     const roomId = uuidv4(); // Gerar um UUID único para a sala
     activeRooms[roomId] = true; // Adicionar a sala na lista de salas ativas
     res.json({ roomId });

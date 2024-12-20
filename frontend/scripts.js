@@ -1,4 +1,4 @@
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; 
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo seu APP_ID do Agora.io
 const socket = io('https://realtime-ydgg.onrender.com');
 
 let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
@@ -13,8 +13,7 @@ let roomId;
 
 async function createRoom() {
     const response = await fetch('https://realtime-ydgg.onrender.com/create-room', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        method: 'GET', // Agora usa GET para criar sala
     });
 
     const { roomId } = await response.json();
