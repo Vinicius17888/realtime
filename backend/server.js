@@ -17,7 +17,7 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-const APP_ID = "701280bcf0b4492ea5a2f3876ed83642"; // Substitua pelo seu APP_ID do Agora.io
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo seu APP_ID do Agora.io
 const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477'; // Substitua pelo APP_CERTIFICATE do Agora.io
 
 let activeRooms = {}; // Objeto para armazenar informações de salas

@@ -52,6 +52,25 @@ async function joinRoom() {
     // Publish local tracks
     await client.publish(localTracks);
 
+    client.on("user-published", async (user, mediaType) => {
+        await client.subscribe(user, mediaType);
+        console.log("Subscribed to user", user.uid);
+
+        if (mediaType === "video") {
+            const remoteVideo = `<div id="user-${user.uid}" class="video-player"></div>`;
+            videoContainer.insertAdjacentHTML('beforeend', remoteVideo);
+            user.videoTrack.play(`user-${user.uid}`);
+        }
+
+        if (mediaType === "audio") {
+            user.audioTrack.play();
+        }
+    });
+
+    client.on("user-unpublished", (user) => {
+        document.getElementById(`user-${user.uid}`).remove();
+    });
+
     socket.emit('join_room', roomId);
 }
 
@@ -67,7 +86,10 @@ messageForm.addEventListener('submit', (e) => {
     const message = messageInput.value;
 
     if (message) {
-        socket.emit('send_message', { room: roomId, message });
+        socket.emit('send_message', { room: roomId, username: "User", message });
+        const messageElement = document.createElement('div');
+        messageElement.textContent = `You: ${message}`;
+        messagesDiv.appendChild(messageElement);
         messageInput.value = '';
     }
 });
