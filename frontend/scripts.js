@@ -27,10 +27,16 @@ async function initializeRoom() {
 
 async function joinRoom() {
     const params = new URLSearchParams(window.location.search);
-    roomId = params.get('room');
+    const roomId = params.get('room');
+    const username = document.getElementById('username').value;
 
     if (!roomId) {
         alert('Invalid or missing room link.');
+        return;
+    }
+
+    if (!username) {
+        alert('Please enter your name.');
         return;
     }
 
@@ -47,7 +53,7 @@ async function joinRoom() {
         const uid = await client.join(APP_ID, roomId, token);
 
         // Create local tracks (camera and mic)
-        localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+        const localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
 
         // Display local video
         const localPlayer = `<div id="user-${uid}" class="video-player"></div>`;
@@ -76,12 +82,14 @@ async function joinRoom() {
             document.getElementById(`user-${user.uid}`).remove();
         });
 
-        socket.emit('join_room', roomId);
+        // Emit join event to Socket.IO
+        socket.emit('join_room', { roomId, username });
     } catch (error) {
         console.error(error);
         alert('Error joining room.');
     }
 }
+
 
 
 // Handle incoming messages
