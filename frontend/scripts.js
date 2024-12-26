@@ -26,44 +26,44 @@ async function initializeRoom() {
 }
 
 async function joinRoom() {
-    console.log("Join button clicked!");
-    const username = document.getElementById('name').value.trim();
+    const params = new URLSearchParams(window.location.search);
+    roomId = params.get('room');
 
-    if (!username) {
-        alert('Please enter your name.');
-        console.log("No username provided.");
+    if (!roomId) {
+        alert('Invalid or missing room link.');
         return;
     }
 
     try {
-        console.log(`Fetching token for room: ${roomId}`);
+        // Fetch Agora token
         const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch token.');
+        }
+
         const { token } = await response.json();
-        console.log("Token fetched:", token);
 
+        // Join Agora channel
         const uid = await client.join(APP_ID, roomId, token);
-        console.log("Successfully joined Agora channel with UID:", uid);
 
+        // Create local tracks (camera and mic)
         localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
-        console.log("Local tracks created.");
 
         // Display local video
         const localPlayer = `<div id="user-${uid}" class="video-player"></div>`;
-        document.getElementById('video-container').insertAdjacentHTML('beforeend', localPlayer);
+        videoContainer.insertAdjacentHTML('beforeend', localPlayer);
         localTracks[1].play(`user-${uid}`);
-        console.log("Local video track displayed.");
 
         // Publish local tracks
         await client.publish(localTracks);
-        console.log("Local tracks published.");
 
         client.on("user-published", async (user, mediaType) => {
             await client.subscribe(user, mediaType);
-            console.log("Subscribed to user:", user.uid);
+            console.log("Subscribed to user", user.uid);
 
             if (mediaType === "video") {
                 const remoteVideo = `<div id="user-${user.uid}" class="video-player"></div>`;
-                document.getElementById('video-container').insertAdjacentHTML('beforeend', remoteVideo);
+                videoContainer.insertAdjacentHTML('beforeend', remoteVideo);
                 user.videoTrack.play(`user-${user.uid}`);
             }
 
@@ -73,17 +73,16 @@ async function joinRoom() {
         });
 
         client.on("user-unpublished", (user) => {
-            console.log("User unpublished:", user.uid);
-            const player = document.getElementById(`user-${user.uid}`);
-            if (player) player.remove();
+            document.getElementById(`user-${user.uid}`).remove();
         });
 
         socket.emit('join_room', roomId);
-        console.log(`Socket.IO: User joined room ${roomId}`);
     } catch (error) {
-        console.error('Error joining room:', error);
+        console.error(error);
+        alert('Error joining room.');
     }
 }
+
 
 // Handle incoming messages
 socket.on('receive_message', (data) => {
