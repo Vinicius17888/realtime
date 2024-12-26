@@ -1,5 +1,5 @@
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642';
-const socket = io('https://realtime-ydgg.onrender.com');
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // APP_ID fornecido
+const socket = io('https://realtime-ydgg.onrender.com'); // Backend fornecido
 
 let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 let localTracks = [];
@@ -7,44 +7,87 @@ let remoteUsers = {};
 let roomId;
 
 async function initializeRoom() {
+    console.log("Initializing room...");
     const params = new URLSearchParams(window.location.search);
     roomId = params.get('room');
 
     if (!roomId) {
+        console.log("No room ID found in URL, creating a new room...");
         const response = await fetch('https://realtime-ydgg.onrender.com/create-room', { method: 'GET' });
         const { roomId: newRoomId } = await response.json();
         roomId = newRoomId;
         const uniqueLink = `${window.location.origin}?room=${roomId}`;
         document.getElementById('link-container').innerHTML = `<p>Share this link: <input value="${uniqueLink}" readonly></p>`;
+        console.log(`Room created with ID: ${roomId}`);
     } else {
+        console.log(`Joining existing room: ${roomId}`);
         document.getElementById('link-container').innerText = `You joined room: ${roomId}`;
     }
 }
 
 async function joinRoom() {
-    console.log("Join button clicked!"); // Verificar se a função é executada
+    console.log("Join button clicked!");
     const username = document.getElementById('name').value.trim();
 
     if (!username) {
         alert('Please enter your name.');
+        console.log("No username provided.");
         return;
     }
 
     try {
-        const response = await fetch(`https://seu-backend.onrender.com/agora-token?channel=${roomId}`);
+        console.log(`Fetching token for room: ${roomId}`);
+        const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomId}`);
         const { token } = await response.json();
-
-        console.log("Token fetched:", token); // Confirmar que o token foi gerado corretamente
+        console.log("Token fetched:", token);
 
         const uid = await client.join(APP_ID, roomId, token);
-        console.log("Agora UID:", uid); // Confirmar que a conexão foi estabelecida
+        console.log("Successfully joined Agora channel with UID:", uid);
+
+        localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+        console.log("Local tracks created.");
+
+        // Display local video
+        const localPlayer = `<div id="user-${uid}" class="video-player"></div>`;
+        document.getElementById('video-container').insertAdjacentHTML('beforeend', localPlayer);
+        localTracks[1].play(`user-${uid}`);
+        console.log("Local video track displayed.");
+
+        // Publish local tracks
+        await client.publish(localTracks);
+        console.log("Local tracks published.");
+
+        client.on("user-published", async (user, mediaType) => {
+            await client.subscribe(user, mediaType);
+            console.log("Subscribed to user:", user.uid);
+
+            if (mediaType === "video") {
+                const remoteVideo = `<div id="user-${user.uid}" class="video-player"></div>`;
+                document.getElementById('video-container').insertAdjacentHTML('beforeend', remoteVideo);
+                user.videoTrack.play(`user-${user.uid}`);
+            }
+
+            if (mediaType === "audio") {
+                user.audioTrack.play();
+            }
+        });
+
+        client.on("user-unpublished", (user) => {
+            console.log("User unpublished:", user.uid);
+            const player = document.getElementById(`user-${user.uid}`);
+            if (player) player.remove();
+        });
+
+        socket.emit('join_room', roomId);
+        console.log(`Socket.IO: User joined room ${roomId}`);
     } catch (error) {
         console.error('Error joining room:', error);
     }
 }
 
-
+// Handle incoming messages
 socket.on('receive_message', (data) => {
+    console.log("Message received:", data);
     const messageDiv = document.createElement('div');
     messageDiv.innerText = `${data.username}: ${data.message}`;
     document.getElementById('messages').appendChild(messageDiv);
