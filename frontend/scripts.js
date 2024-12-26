@@ -1,5 +1,5 @@
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // APP_ID fornecido
-const socket = io('https://realtime-ydgg.onrender.com'); // Backend fornecido
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642';
+const socket = io('https://realtime-ydgg.onrender.com');
 
 let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 let localTracks = [];
