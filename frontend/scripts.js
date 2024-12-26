@@ -22,6 +22,7 @@ async function initializeRoom() {
 }
 
 async function joinRoom() {
+    console.log("Join button clicked!"); // Verificar se a função é executada
     const username = document.getElementById('name').value.trim();
 
     if (!username) {
@@ -29,27 +30,19 @@ async function joinRoom() {
         return;
     }
 
-    const response = await fetch(`https://realtime-ydgg.onrender.com/agora-token?channel=${roomId}`);
-    const { token } = await response.json();
+    try {
+        const response = await fetch(`https://seu-backend.onrender.com/agora-token?channel=${roomId}`);
+        const { token } = await response.json();
 
-    const uid = await client.join(APP_ID, roomId, token);
-    localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
-    localTracks[1].play(`user-${uid}`);
-    await client.publish(localTracks);
+        console.log("Token fetched:", token); // Confirmar que o token foi gerado corretamente
 
-    client.on("user-published", async (user, mediaType) => {
-        await client.subscribe(user, mediaType);
-        if (mediaType === "video") {
-            user.videoTrack.play(`user-${user.uid}`);
-        }
-    });
-
-    client.on("user-unpublished", (user) => {
-        document.getElementById(`user-${user.uid}`).remove();
-    });
-
-    socket.emit('join_room', roomId);
+        const uid = await client.join(APP_ID, roomId, token);
+        console.log("Agora UID:", uid); // Confirmar que a conexão foi estabelecida
+    } catch (error) {
+        console.error('Error joining room:', error);
+    }
 }
+
 
 socket.on('receive_message', (data) => {
     const messageDiv = document.createElement('div');
