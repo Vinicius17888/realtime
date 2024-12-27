@@ -10,32 +10,30 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: '*',
-        methods: ['GET', 'POST']
-    }
+        methods: ['GET', 'POST'],
+    },
 });
 
 app.use(cors());
 app.use(express.json());
 
-const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua com seu APP_ID
-const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477'; // Substitua com seu APP_CERTIFICATE
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642';
+const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477';
 
-let activeRooms = {}; // Objeto para armazenar salas ativas
+let activeRooms = {};
 
-// Criar uma sala
+// Endpoint para criar uma sala
 app.get('/create-room', (req, res) => {
     const roomId = uuidv4();
     activeRooms[roomId] = true;
-    console.log(`Room created: ${roomId}`);
     res.json({ roomId });
 });
 
-// Gerar token do Agora.io
+// Endpoint para gerar o token do Agora
 app.get('/agora-token', (req, res) => {
     const channelName = req.query.channel;
 
     if (!channelName || !activeRooms[channelName]) {
-        console.log(`Invalid or non-existent room: ${channelName}`);
         return res.status(400).send('Invalid or non-existent room.');
     }
 
@@ -51,12 +49,9 @@ app.get('/agora-token', (req, res) => {
         role,
         expireTime
     );
-
-    console.log(`Token generated for room ${channelName}`);
     res.json({ token });
 });
 
-// Configuração do Socket.IO
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
 
@@ -65,7 +60,8 @@ io.on('connection', (socket) => {
             socket.join(roomId);
             console.log(`User ${socket.id} joined room ${roomId}`);
         } else {
-            socket.emit('error', 'Room does not exist');
+            console.error(`Room does not exist: ${roomId}`);
+            socket.emit('error', 'Room does not exist.');
         }
     });
 
