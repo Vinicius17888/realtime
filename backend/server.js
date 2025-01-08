@@ -8,10 +8,10 @@ const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 
 // Configuração do banco de dados
 const dbConfig = {
-    server: 'localhost',               // Servidor local
-    user: 'MinhaConexaoUser',          // Nome do usuário criado
-    password: 'SenhaForte123',         // Senha criada para o usuário
-    database: 'VideoChatDB',           // Nome do banco de dados criado
+    server: 'PMSP02-DEV\\DSV',               // Servidor local
+    user: 'PMSP\\44620',          // Nome do usuário criado
+    password: '',         // Senha criada para o usuário
+    database: 'BDViniTes',           // Nome do banco de dados criado
     port: 1433,                        // Porta padrão para SQL Server
     options: {
         encrypt: true,                 // Usar SSL para conexão segura
