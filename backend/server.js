@@ -20,7 +20,7 @@ const sqlConfig = {
     user: 'PMSP\\44620',
     password: '',
     database: 'BDViniTest',
-    server: 'PMSP02-DEV',
+    server: 'PMSP02-DEV\\DSV',
     options: {
         encrypt: true,
         trustServerCertificate: true
