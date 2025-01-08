@@ -18,9 +18,9 @@ app.use(cors());
 // Configuração do SQL Server
 const sqlConfig = {
     user: 'seuUsuario',
-    password: 'suaSenha',
-    database: 'suaBaseDeDados',
-    server: 'seuServidor',
+    password: '',
+    database: 'PMSP02-DEV',
+    server: 'BDViniTest',
     options: {
         encrypt: true,
         trustServerCertificate: true
