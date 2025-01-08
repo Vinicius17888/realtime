@@ -18,14 +18,23 @@ app.use(cors());
 // Configuração do SQL Server
 const sqlConfig = {
     user: 'seuUsuario',
-    password: '',
-    database: 'PMSP02-DEV',
-    server: 'BDViniTest',
+    password: 'suaSenha',
+    database: 'suaBaseDeDados',
+    server: 'seuServidor',
     options: {
         encrypt: true,
         trustServerCertificate: true
     }
 };
+
+(async () => {
+    try {
+        const pool = await sql.connect(sqlConfig);
+        console.log("Conexão com o banco de dados bem-sucedida!");
+    } catch (error) {
+        console.error("Erro ao conectar ao banco de dados:", error);
+    }
+})();
 
 // Rota para criar sala com link único
 app.get('/create-room', async (req, res) => {
@@ -33,18 +42,21 @@ app.get('/create-room', async (req, res) => {
     const createdBy = req.query.createdBy || 'Unknown'; // Nome do criador da sala
 
     try {
+        console.log("Tentando salvar a sala no banco de dados...");
         let pool = await sql.connect(sqlConfig);
-        await pool.request()
+        const result = await pool.request()
             .input('RoomId', sql.UniqueIdentifier, roomId)
             .input('CreatedBy', sql.NVarChar, createdBy)
             .query('INSERT INTO Rooms (RoomId, CreatedBy) VALUES (@RoomId, @CreatedBy)');
 
+        console.log("Sala salva no banco de dados:", result);
         res.json({ roomId });
     } catch (error) {
-        console.error('Erro ao criar sala no banco:', error);
+        console.error("Erro ao salvar sala no banco de dados:", error);
         res.status(500).json({ error: 'Erro ao criar sala.' });
     }
 });
+
 
 // Rota para gerar token do Agora
 app.get('/agora-token', (req, res) => {
@@ -73,11 +85,23 @@ app.get('/agora-token', (req, res) => {
 
 // Socket.IO - Chat Dinâmico
 io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.id}`);
+    console.log(`Usuário conectado: ${socket.id}`);
 
-    socket.on('join_room', (room) => {
-        socket.join(room);
-        console.log(`User ${socket.id} joined room ${room}`);
+    socket.on('join_room', async (roomId, participantName) => {
+        try {
+            console.log(`Tentando salvar participante na sala ${roomId}`);
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                .input('RoomId', sql.UniqueIdentifier, roomId)
+                .input('ParticipantName', sql.NVarChar, participantName)
+                .query('INSERT INTO Participants (RoomId, ParticipantName) VALUES (@RoomId, @ParticipantName)');
+
+            console.log("Participante salvo no banco de dados:", result);
+            socket.join(roomId);
+            console.log(`${participantName} entrou na sala ${roomId}`);
+        } catch (err) {
+            console.error("Erro ao salvar participante no banco de dados:", err);
+        }
     });
 
     socket.on('send_message', (data) => {
