@@ -1,71 +1,83 @@
-const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 const express = require('express');
 const http = require('http');
-const cors = require('cors');
 const { Server } = require('socket.io');
-const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
 const sql = require('mssql');
+const { v4: uuidv4 } = require('uuid');
+const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: '*' } // Permitir qualquer origem para Socket.IO
-});
-
-// Configurar CORS para todas as requisições HTTP
-app.use(cors());
-
-// Configuração do SQL Server
-const sqlConfig = {
-    user: 'PMSP\\44620',
-    password: '',
-    database: 'BDViniTest',
-    server: 'PMSP02-DEV\\DSV',
+// Configuração do banco de dados
+const dbConfig = {
+    server: 'localhost',               // Servidor local
+    user: 'MinhaConexaoUser',          // Nome do usuário criado
+    password: 'SenhaForte123',         // Senha criada para o usuário
+    database: 'VideoChatDB',           // Nome do banco de dados criado
+    port: 1433,                        // Porta padrão para SQL Server
     options: {
-        encrypt: true,
-        trustServerCertificate: true
+        encrypt: true,                 // Usar SSL para conexão segura
+        trustServerCertificate: true  // Confiança no certificado
     }
 };
 
-(async () => {
-    try {
-        const pool = await sql.connect(sqlConfig);
-        console.log("Conexão com o banco de dados bem-sucedida!");
-    } catch (error) {
-        console.error("Erro ao conectar ao banco de dados:", error);
-    }
-})();
-
-// Rota para criar sala com link único
-app.get('/create-room', async (req, res) => {
-    const roomId = uuidv4(); // Gera um ID único para a sala
-    const createdBy = req.query.createdBy || 'Unknown'; // Nome do criador da sala
-
-    try {
-        console.log("Tentando salvar a sala no banco de dados...");
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-            .input('RoomId', sql.UniqueIdentifier, roomId)
-            .input('CreatedBy', sql.NVarChar, createdBy)
-            .query('INSERT INTO Rooms (RoomId, CreatedBy) VALUES (@RoomId, @CreatedBy)');
-
-        console.log("Sala salva no banco de dados:", result);
-        res.json({ roomId });
-    } catch (error) {
-        console.error("Erro ao salvar sala no banco de dados:", error);
-        res.status(500).json({ error: 'Erro ao criar sala.' });
+// Configuração do servidor e Socket.IO
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
     }
 });
 
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-// Rota para gerar token do Agora
-app.get('/agora-token', (req, res) => {
-    const APP_ID = process.env.APP_ID;
-    const APP_CERTIFICATE = process.env.APP_CERTIFICATE;
+// Variáveis do Agora.io
+const APP_ID = '701280bcf0b4492ea5a2f3876ed83642'; // Substitua pelo seu APP_ID
+const APP_CERTIFICATE = 'eb02c6fca8194518b9229d990d306477'; // Substitua pelo APP_CERTIFICATE
+
+// Testar conexão com o banco de dados
+async function testDatabaseConnection() {
+    try {
+        const pool = await sql.connect(dbConfig);
+        console.log('Conexão com o banco de dados bem-sucedida!');
+        await pool.close();
+    } catch (err) {
+        console.error('Erro ao conectar ao banco:', err);
+    }
+}
+testDatabaseConnection();
+
+// Rota para criar uma sala
+app.post('/create-room', async (req, res) => {
+    const roomId = uuidv4();
+    const roomName = req.body.roomName || 'Sala Sem Nome';
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input('RoomId', sql.UniqueIdentifier, roomId)
+            .input('RoomName', sql.NVarChar, roomName)
+            .query(`
+                INSERT INTO Rooms (RoomId, RoomName)
+                VALUES (@RoomId, @RoomName)
+            `);
+
+        console.log('Sala criada e salva no banco:', roomId);
+        res.json({ roomId, roomName });
+    } catch (err) {
+        console.error('Erro ao salvar sala no banco:', err);
+        res.status(500).json({ error: 'Erro ao criar sala' });
+    }
+});
+
+// Rota para gerar token do Agora.io
+app.get('/agora-token', async (req, res) => {
     const channelName = req.query.channel;
 
     if (!channelName) {
-        return res.status(400).json({ error: 'Channel name is required' });
+        return res.status(400).json({ error: 'O nome do canal é obrigatório' });
     }
 
     const uid = 0;
@@ -77,31 +89,19 @@ app.get('/agora-token', (req, res) => {
             APP_ID, APP_CERTIFICATE, channelName, uid, role, expireTime
         );
         res.json({ token });
-    } catch (error) {
-        console.error('Token generation error:', error);
-        res.status(500).json({ error: 'Token generation failed' });
+    } catch (err) {
+        console.error('Erro ao gerar token:', err);
+        res.status(500).json({ error: 'Erro ao gerar token' });
     }
 });
 
-// Socket.IO - Chat Dinâmico
+// Configuração do Socket.IO
 io.on('connection', (socket) => {
     console.log(`Usuário conectado: ${socket.id}`);
 
-    socket.on('join_room', async (roomId, participantName) => {
-        try {
-            console.log(`Tentando salvar participante na sala ${roomId}`);
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                .input('RoomId', sql.UniqueIdentifier, roomId)
-                .input('ParticipantName', sql.NVarChar, participantName)
-                .query('INSERT INTO Participants (RoomId, ParticipantName) VALUES (@RoomId, @ParticipantName)');
-
-            console.log("Participante salvo no banco de dados:", result);
-            socket.join(roomId);
-            console.log(`${participantName} entrou na sala ${roomId}`);
-        } catch (err) {
-            console.error("Erro ao salvar participante no banco de dados:", err);
-        }
+    socket.on('join_room', (room) => {
+        socket.join(room);
+        console.log(`Usuário ${socket.id} entrou na sala ${room}`);
     });
 
     socket.on('send_message', (data) => {
@@ -109,9 +109,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log(`User disconnected: ${socket.id}`);
+        console.log(`Usuário desconectado: ${socket.id}`);
     });
 });
 
+// Iniciar servidor
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
