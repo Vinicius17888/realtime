@@ -8,7 +8,7 @@ const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 
 // Configuração do banco de dados
 const dbConfig = {
-    server: 'PMSP02-DEV\\DSV',               // Servidor local
+    server: 'PMSP02-DEV',               // Servidor local
     user: 'PMSP\\44620',          // Nome do usuário criado
     password: '',         // Senha criada para o usuário
     database: 'BDViniTest',           // Nome do banco de dados criado
