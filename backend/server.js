@@ -11,7 +11,7 @@ const dbConfig = {
     server: 'PMSP02-DEV\\DSV',               // Servidor local
     user: 'PMSP\\44620',          // Nome do usuário criado
     password: '',         // Senha criada para o usuário
-    database: 'BDViniTes',           // Nome do banco de dados criado
+    database: 'BDViniTest',           // Nome do banco de dados criado
     port: 1433,                        // Porta padrão para SQL Server
     options: {
         encrypt: true,                 // Usar SSL para conexão segura
