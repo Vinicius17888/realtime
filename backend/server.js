@@ -19,8 +19,8 @@ app.use(cors());
 const sqlConfig = {
     user: 'PMSP\\44620',
     password: '',
-    database: 'PMSP02-DEV',
-    server: 'BDViniTest',
+    database: 'BDViniTest',
+    server: 'PMSP02-DEV',
     options: {
         encrypt: true,
         trustServerCertificate: true
