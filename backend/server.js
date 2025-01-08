@@ -3,6 +3,8 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const { Server } = require('socket.io');
+const { v4: uuidv4 } = require('uuid');
+const sql = require('mssql');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,6 +15,38 @@ const io = new Server(server, {
 // Configurar CORS para todas as requisições HTTP
 app.use(cors());
 
+// Configuração do SQL Server
+const sqlConfig = {
+    user: 'seuUsuario',
+    password: 'suaSenha',
+    database: 'suaBaseDeDados',
+    server: 'seuServidor',
+    options: {
+        encrypt: true,
+        trustServerCertificate: true
+    }
+};
+
+// Rota para criar sala com link único
+app.get('/create-room', async (req, res) => {
+    const roomId = uuidv4(); // Gera um ID único para a sala
+    const createdBy = req.query.createdBy || 'Unknown'; // Nome do criador da sala
+
+    try {
+        let pool = await sql.connect(sqlConfig);
+        await pool.request()
+            .input('RoomId', sql.UniqueIdentifier, roomId)
+            .input('CreatedBy', sql.NVarChar, createdBy)
+            .query('INSERT INTO Rooms (RoomId, CreatedBy) VALUES (@RoomId, @CreatedBy)');
+
+        res.json({ roomId });
+    } catch (error) {
+        console.error('Erro ao criar sala no banco:', error);
+        res.status(500).json({ error: 'Erro ao criar sala.' });
+    }
+});
+
+// Rota para gerar token do Agora
 app.get('/agora-token', (req, res) => {
     const APP_ID = process.env.APP_ID;
     const APP_CERTIFICATE = process.env.APP_CERTIFICATE;
